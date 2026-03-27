@@ -33,17 +33,18 @@ app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
   db.query("SELECT * FROM users WHERE email=?", [email], async (err, result) => {
-    if (result.length === 0)
-      return res.json({ message: "User not found" });
+    if (result.length === 0) {
+  return res.json({ success: false, message: "User not found" });
+}
 
-    const user = result[0];
-    const match = await bcrypt.compare(password, user.password);
+const user = result[0];
+const match = await bcrypt.compare(password, user.password);
 
-    if (match) {
-      res.json({ message: "Login successful", user });
-    } else {
-      res.json({ message: "Wrong password" });
-    }
+if (match) {
+  res.json({ success: true, message: "Login successful", user });
+} else {
+  res.json({ success: false, message: "Wrong password" });
+}
   });
 });
 
