@@ -19,69 +19,55 @@ app.post("/register", (req, res) => {
 
   const bcrypt = require("bcrypt");
 
-  // 1️⃣ Check if user exists
+ app.post("/register", (req, res) => {
+  const { email, password } = req.body;
+  const bcrypt = require("bcrypt");
+
+  console.log("REGISTER:", req.body);
+
   db.query("SELECT * FROM users WHERE email = ?", [email], (err, result) => {
-    if (err) {
-      console.log(err);
-      return res.json({ success: false, message: "Database error" });
-    }
+    if (err) return res.json({ success: false, message: "DB error" });
 
     if (result.length > 0) {
       return res.json({ success: false, message: "User already exists" });
     }
 
-    // 2️⃣ Hash password
     bcrypt.hash(password, 10, (err, hash) => {
-      if (err) {
-        return res.json({ success: false, message: "Error hashing password" });
-      }
-
-      // 3️⃣ Insert new user
       db.query(
         "INSERT INTO users (email, password) VALUES (?, ?)",
         [email, hash],
-        (err, result) => {
-          if (err) {
-            console.log(err);
-            return res.json({ success: false, message: "Database error" });
-          }
+        (err) => {
+          if (err) return res.json({ success: false, message: "Insert error" });
 
-          res.json({ success: true, message: "Signup successful" });
+          res.json({ success: true, message: "Signup success" });
         }
       );
     });
   });
 });
 
-// LOGIN
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
+  const bcrypt = require("bcrypt");
+
+  console.log("LOGIN:", req.body);
 
   db.query("SELECT * FROM users WHERE email = ?", [email], (err, result) => {
-    if (err) {
-      console.log(err);
-      return res.json({ success: false, message: "Database error" });
-    }
+    if (err) return res.json({ success: false, message: "DB error" });
 
     if (result.length === 0) {
       return res.json({ success: false, message: "User not found" });
     }
 
-    const user = result[0];
-
-    const bcrypt = require("bcrypt");
-
-    bcrypt.compare(password, user.password, (err, isMatch) => {
-      if (isMatch) {
-        res.json({ success: true });
+    bcrypt.compare(password, result[0].password, (err, match) => {
+      if (match) {
+        res.json({ success: true, message: "Login success" });
       } else {
         res.json({ success: false, message: "Wrong password" });
       }
     });
   });
 });
-
-
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
