@@ -8,9 +8,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// TEST ROUTE
 app.get("/", (req, res) => {
   res.send("Backend running 🚀");
 });
+
 
 // REGISTER
 app.post("/register", async (req, res) => {
@@ -22,31 +24,44 @@ app.post("/register", async (req, res) => {
     "INSERT INTO users (username,email,password) VALUES (?,?,?)",
     [username, email, hashed],
     (err) => {
-      if (err) return res.json({ message: "User exists" });
-      res.json({ message: "Registered successfully" });
+      if (err) {
+        return res.json({ success: false, message: "User exists" });
+      }
+      res.json({ success: true, message: "Registered successfully" });
     }
   );
 });
+
 
 // LOGIN
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
-  db.query("SELECT * FROM users WHERE email=?", [email], async (err, result) => {
-    if (result.length === 0) {
-  return res.json({ success: false, message: "User not found" });
-}
+  db.query(
+    "SELECT * FROM users WHERE email=?",
+    [email],
+    async (err, result) => {
 
-const user = result[0];
-const match = await bcrypt.compare(password, user.password);
+      if (err) {
+        return res.json({ success: false, message: "Database error" });
+      }
 
-if (match) {
-  res.json({ success: true, message: "Login successful", user });
-} else {
-  res.json({ success: false, message: "Wrong password" });
-}
-  });
+      if (result.length === 0) {
+        return res.json({ success: false, message: "User not found" });
+      }
+
+      const user = result[0];
+      const match = await bcrypt.compare(password, user.password);
+
+      if (match) {
+        res.json({ success: true, message: "Login successful", user });
+      } else {
+        res.json({ success: false, message: "Wrong password" });
+      }
+    }
+  );
 });
+
 
 const PORT = process.env.PORT || 3000;
 
